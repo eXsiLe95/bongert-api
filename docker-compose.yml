@@ -20,7 +20,7 @@ services:
     restart: unless-stopped
 
   db:
-    image: postgres:16-alpine
+    image: postgres:18.3-alpine
     container_name: bongert-db
     environment:
       POSTGRES_DB: ${DB_NAME}
@@ -29,7 +29,7 @@ services:
     ports:
       - "${DB_PORT}:5432"
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 10s

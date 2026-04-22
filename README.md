@@ -31,6 +31,40 @@ Example files:
 
 Local working files such as `.env`, `.env.docker`, `.env.development`, `.env.test`, and `.env.production` are gitignored.
 
+## Database Migrations
+
+TypeORM runs with `synchronize: false` in all environments.
+Schema changes must go through migrations.
+
+Baseline commands:
+
+```bash
+# build the app first for production-style migration runs
+npm run build
+
+# run pending migrations against the built artifact
+npm run db:migration:run
+
+# revert the last migration against the built artifact
+npm run db:migration:revert
+```
+
+For local development with env vars already exported in your shell:
+
+```bash
+npm run db:migration:run:dev
+npm run db:migration:revert:dev
+```
+
+For ad-hoc TypeORM CLI usage:
+
+```bash
+npm run typeorm -- migration:show
+npm run typeorm -- migration:generate ./src/migrations/<name>
+```
+
+Deployment and rollback guidance lives in [`docs/deployment.md`](docs/deployment.md).
+
 ## Run
 
 ```bash

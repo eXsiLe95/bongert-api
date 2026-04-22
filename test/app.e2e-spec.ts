@@ -1,25 +1,33 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import request from 'supertest';
-import { App } from 'supertest/types';
-import { AppModule } from './../src/app.module';
+import { HealthController } from './../src/health/health.controller';
+import { HealthService } from './../src/health/health.service';
+import { HealthResponse } from './../src/health/health.types';
 
-describe('AppController (e2e)', () => {
-  let app: INestApplication<App>;
+describe('HealthController (integration)', () => {
+  let app: INestApplication;
+  let healthController: HealthController;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
+      controllers: [HealthController],
+      providers: [HealthService],
     }).compile();
 
     app = moduleFixture.createNestApplication();
     await app.init();
+    healthController = app.get(HealthController);
   });
 
-  it('/ (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/')
-      .expect(200)
-      .expect('Hello World!');
+  afterEach(async () => {
+    await app.close();
+  });
+
+  it('/health returns status and timestamp through the application container', () => {
+    const response: HealthResponse = healthController.getHealth();
+
+    expect(response.status).toBe('ok');
+    expect(typeof response.timestamp).toBe('string');
+    expect(Number.isNaN(Date.parse(response.timestamp))).toBe(false);
   });
 });

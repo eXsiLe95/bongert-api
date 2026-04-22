@@ -79,6 +79,23 @@ npm run build
 npm run start:prod
 ```
 
+## Health Check
+
+The API exposes a lightweight liveness endpoint:
+
+```bash
+GET /health
+```
+
+Response shape:
+
+```json
+{
+  "status": "ok",
+  "timestamp": "2026-04-22T17:30:47.000Z"
+}
+```
+
 ## Docker
 
 Build and start the API plus Postgres locally:

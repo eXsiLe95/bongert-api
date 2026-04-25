@@ -43,6 +43,12 @@ docker compose --env-file .env.docker run --rm api npm run db:migration:run
 docker compose --env-file .env.docker up -d api
 ```
 
+6. Verify the liveness endpoint:
+
+```bash
+curl http://localhost:3000/health
+```
+
 ## Production Deployment Strategy
 
 1. Build and publish the new application image.
@@ -109,3 +115,5 @@ For local development with shell-provided env vars:
 npm run db:migration:run:dev
 npm run db:migration:revert:dev
 ```
+
+The production container does not run migrations automatically on startup. Its health check targets `GET /health`, so rollout validation should use that endpoint as well.

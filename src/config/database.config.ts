@@ -2,7 +2,7 @@ import { registerAs } from '@nestjs/config';
 import * as Joi from 'joi';
 import { DatabaseConfig } from './config.types';
 
-const databaseConfigSchema = Joi.object<DatabaseConfig>({
+export const databaseConfigSchema = Joi.object<DatabaseConfig>({
   host: Joi.string().required(),
   port: Joi.number().integer().port().required(),
   user: Joi.string().required(),
@@ -23,11 +23,13 @@ export function getDatabaseConfigFromEnv(
 }
 
 export function validateDatabaseConfig(env: NodeJS.ProcessEnv): DatabaseConfig {
-  const validationResult: Joi.ValidationResult<DatabaseConfig> =
-    databaseConfigSchema.validate(getDatabaseConfigFromEnv(env), {
+  const validationResult = databaseConfigSchema.validate(
+    getDatabaseConfigFromEnv(env),
+    {
       abortEarly: true,
       allowUnknown: false,
-    });
+    },
+  );
 
   if (validationResult.error) {
     throw validationResult.error;

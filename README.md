@@ -8,7 +8,25 @@ NestJS API for the `bongert` project.
 npm install
 ```
 
-## Environment Config
+## Available Scripts
+
+```bash
+# development server
+npm run start:dev
+
+# production build and start
+npm run build
+npm run start:prod
+
+# lint and tests
+npm run lint
+npm test -- --runInBand
+
+# end-to-end test entrypoint
+npm run test:e2e
+```
+
+## Environment Configuration
 
 The app uses `@nestjs/config` with environment-specific `.env` files.
 
@@ -30,6 +48,28 @@ Example files:
 - `.env.docker.example`
 
 Local working files such as `.env`, `.env.docker`, `.env.development`, `.env.test`, and `.env.production` are gitignored.
+
+Required variables:
+
+```env
+NODE_ENV=development
+APP_PORT=3000
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_NAME=bongert_dev
+```
+
+Application startup validates:
+
+- `NODE_ENV`
+- `APP_PORT`
+- `DB_HOST`
+- `DB_PORT`
+- `DB_USER`
+- `DB_PASSWORD`
+- `DB_NAME`
 
 ## Database Migrations
 
@@ -56,6 +96,8 @@ npm run db:migration:run:dev
 npm run db:migration:revert:dev
 ```
 
+The dev migration commands read directly from the local TypeORM data source and therefore expect the database env vars to be available in the shell or provided by your process manager.
+
 For ad-hoc TypeORM CLI usage:
 
 ```bash
@@ -68,16 +110,15 @@ Deployment and rollback guidance lives in [`docs/deployment.md`](docs/deployment
 ## Run
 
 ```bash
-# default: NODE_ENV=development if unset
-npm run start
-
-# watch mode
+# development
 npm run start:dev
 
 # production build
 npm run build
 npm run start:prod
 ```
+
+The application verifies the database connection during startup. A running Postgres instance and valid DB env vars are required even for local starts.
 
 ## Health Check
 
@@ -106,6 +147,7 @@ docker compose --env-file .env.docker up --build
 ```
 
 The API is exposed on `http://localhost:3000` and Postgres on `localhost:5432`.
+The container health check also uses `GET /health`.
 
 For containerized runs, pass `.env.docker` to Compose so it can resolve the stack configuration and inject the same values into the containers:
 
@@ -123,27 +165,3 @@ The app and Docker Compose intentionally use the same variable names. The differ
 - Docker runs use `.env.docker` with `DB_HOST=db`
 
 That keeps the app config consistent while allowing host-based and container-based networking to differ cleanly.
-
-## Required Variables
-
-```env
-NODE_ENV=development
-APP_PORT=3000
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=postgres
-DB_NAME=bongert_dev
-```
-
-## Validation
-
-Application startup validates:
-
-- `NODE_ENV`
-- `APP_PORT`
-- `DB_HOST`
-- `DB_PORT`
-- `DB_USER`
-- `DB_PASSWORD`
-- `DB_NAME`

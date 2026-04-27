@@ -3,12 +3,14 @@ import { ConfigType } from '@nestjs/config';
 import { Logger } from 'nestjs-pino';
 import { DataSource } from 'typeorm';
 import { AppModule } from './app.module';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import appConfig from './config/app.config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   app.useLogger(app.get(Logger));
   app.setGlobalPrefix('api/v1', { exclude: ['health'] });
+  app.useGlobalFilters(new GlobalExceptionFilter());
   app.enableShutdownHooks();
 
   const logger = app.get(Logger);

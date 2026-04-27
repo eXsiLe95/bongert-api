@@ -4,7 +4,10 @@
   "description": "",
   "author": "",
   "private": true,
-  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "license": "MIT",
   "scripts": {
     "build": "nest build",
     "db:migration:run": "node ./node_modules/typeorm/cli.js migration:run -d dist/database/data-source.js",

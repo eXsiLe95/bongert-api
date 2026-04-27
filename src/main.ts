@@ -9,6 +9,7 @@ async function bootstrap() {
   const logger = new Logger('Bootstrap');
   try {
     const app = await NestFactory.create(AppModule);
+    app.setGlobalPrefix('api/v1', { exclude: ['health'] });
     app.enableShutdownHooks();
 
     const config = app.get<ConfigType<typeof appConfig>>(appConfig.KEY);

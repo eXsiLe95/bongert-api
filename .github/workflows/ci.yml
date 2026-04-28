@@ -7,7 +7,8 @@ on:
     branches: [main]
 
 jobs:
-  ci:
+  build-and-test:
+    name: Build & Test
     runs-on: ubuntu-latest
 
     steps:
@@ -18,12 +19,49 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
 
-      - run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-      - run: npm run lint
+      - name: Lint
+        run: npm run lint
 
-      - run: npm run build
+      - name: Build
+        run: npm run build
 
-      - run: npm test -- --runInBand
+      - name: Unit tests
+        run: npm test -- --runInBand
 
-      - run: npm run test:e2e -- --runInBand
+      - name: E2E tests
+        run: npm run test:e2e -- --runInBand
+
+  version-check:
+    name: Version bump check
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for skip label
+        id: skip
+        run: |
+          labels='${{ toJson(github.event.pull_request.labels.*.name) }}'
+          if echo "$labels" | grep -q "skip-version-check"; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Compare version with main
+        if: steps.skip.outputs.skip == 'false'
+        run: |
+          pr_version=$(node -p "require('./package.json').version")
+          main_version=$(git show origin/main:package.json | node -p "JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')).version")
+          echo "PR version:   $pr_version"
+          echo "main version: $main_version"
+          if [ "$pr_version" = "$main_version" ]; then
+            echo "::error::Version in package.json ($pr_version) was not bumped. Update the version or add the 'skip-version-check' label."
+            exit 1
+          fi

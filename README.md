@@ -8,6 +8,16 @@ NestJS API for the `bongert` project.
 npm install
 ```
 
+## Versioning
+
+This project follows [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH`):
+
+- **PATCH** (`0.1.0` → `0.1.1`): bug fixes, internal changes, refactoring — no API changes
+- **MINOR** (`0.1.1` → `0.2.0`): new features, new endpoints, backward-compatible API changes
+- **MAJOR** (`0.2.0` → `1.0.0`): breaking API changes, removed endpoints, incompatible schema changes
+
+The version in `package.json` is the single source of truth. The deploy pipeline tags every Docker image with this version. Every merge request must include a version bump in `package.json`.
+
 ## Available Scripts
 
 ```bash
@@ -165,3 +175,25 @@ The app and Docker Compose intentionally use the same variable names. The differ
 - Docker runs use `.env.docker` with `DB_HOST=db`
 
 That keeps the app config consistent while allowing host-based and container-based networking to differ cleanly.
+
+## Production Deployment
+
+The deploy pipeline (`.github/workflows/deploy.yml`) builds and pushes a Docker image to `ghcr.io` on every push to `main`. It can also be triggered manually.
+
+On the server, the production stack runs via `docker-compose.prod.yml` (API + Postgres + Watchtower). Watchtower automatically pulls new images and restarts the API container.
+
+Quick start on a fresh server:
+
+```bash
+# authenticate with ghcr.io
+echo "<PAT>" | docker login ghcr.io -u <github-username> --password-stdin
+
+# configure environment
+cp .env.prod.example .env.prod
+# edit .env.prod and set a real DB_PASSWORD
+
+# start the stack
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+```
+
+For migration handling, rollback strategy, and detailed setup instructions see [`docs/deployment.md`](docs/deployment.md).

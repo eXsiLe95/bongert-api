@@ -11,6 +11,72 @@ The application does **not** run migrations automatically on startup.
 - Take a database backup before applying production migrations.
 - Prefer forward fixes over ad-hoc rollback when a migration has already touched production data.
 
+## CI/CD Pipeline
+
+The GitHub Actions workflow (`.github/workflows/deploy.yml`) builds and pushes a Docker image to `ghcr.io/exsile95/bongert-api` on every push to `main`. It can also be triggered manually via `workflow_dispatch`.
+
+Each image is tagged with:
+
+- `latest` – always points to the most recent build
+- `sha-<commit>` – pinned to a specific commit
+
+## Server Setup (First Time)
+
+### Prerequisites
+
+- Docker and the Compose plugin (`docker compose`) installed
+- A GitHub Personal Access Token (PAT) with `read:packages` scope
+
+### 1. Authenticate Docker with ghcr.io
+
+```bash
+echo "<PAT>" | docker login ghcr.io -u <github-username> --password-stdin
+```
+
+This stores credentials in `/root/.docker/config.json`, which Watchtower uses to pull new images.
+
+### 2. Prepare environment
+
+Clone the repo or copy `docker-compose.prod.yml` and `.env.prod.example` onto the server, then create the env file:
+
+```bash
+cp .env.prod.example .env.prod
+# edit .env.prod and set a real DB_PASSWORD
+```
+
+### 3. Start the stack
+
+```bash
+# start only Postgres first
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d db
+
+# run migrations
+docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm api npm run db:migration:run
+
+# start everything
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+```
+
+### 4. Verify
+
+```bash
+curl http://localhost:3000/health
+```
+
+## Ongoing Deployments
+
+Watchtower polls ghcr.io every 60 seconds. When a new `latest` image appears, it automatically pulls and restarts the API container. No manual action needed for code-only changes.
+
+For deployments that include migrations:
+
+1. Create a database backup.
+2. Pull the new image: `docker compose -f docker-compose.prod.yml pull api`
+3. Run migrations: `docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm api npm run db:migration:run`
+4. Restart the API: `docker compose -f docker-compose.prod.yml --env-file .env.prod up -d api`
+5. Verify: `curl http://localhost:3000/health`
+
+The key rule is: **migrations first, traffic second**.
+
 ## Local Docker Workflow
 
 1. Prepare Docker env:
@@ -48,21 +114,6 @@ docker compose --env-file .env.docker up -d api
 ```bash
 curl http://localhost:3000/health
 ```
-
-## Production Deployment Strategy
-
-1. Build and publish the new application image.
-2. Create a database backup/snapshot.
-3. Pull the new image onto the server.
-4. Run migrations as a one-off task using the new image.
-5. Start or update the application containers.
-6. Verify health checks and logs.
-
-The key rule is:
-
-- **Migrations first, traffic second**
-
-That avoids serving a new app version against an old schema.
 
 ## Rollback Strategy
 
